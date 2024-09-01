@@ -5,10 +5,9 @@ import cookieparser from "cookie-parser";
 import morgan from "morgan";
 import dbConnection from "./utils";
 import { routeNotFound, errorHandler } from "./middleware/errorMiddleware";
+import routes from "./routes/index";
 
 dotenv.config();
-
-const routes = "";
 
 const app: Express = express();
 const port = process.env.PORT || 8800;
@@ -27,7 +26,7 @@ app.use(
 app.use(cookieparser());
 app.use(morgan("dev"));
 
-// app.use('/api', routes)
+app.use("/api", routes);
 
 app.use(routeNotFound);
 app.use(errorHandler);
