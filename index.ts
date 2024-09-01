@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieparser from "cookie-parser";
 import morgan from "morgan";
 import dbConnection from "./utils";
+import { routeNotFound, errorHandler } from "./middleware/errorMiddleware";
 
 dotenv.config();
 
@@ -13,7 +14,7 @@ const app: Express = express();
 const port = process.env.PORT || 8800;
 
 app.use(express.json());
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
@@ -28,8 +29,8 @@ app.use(morgan("dev"));
 
 // app.use('/api', routes)
 
-// app.use(routeNotFound)
-// app.use(errorHandler)
+app.use(routeNotFound);
+app.use(errorHandler);
 
 dbConnection();
 
