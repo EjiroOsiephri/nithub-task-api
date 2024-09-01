@@ -37,6 +37,8 @@ export const registerUser = async (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
+    console.log(error);
+
     return res.status(400).json({ status: false, message: error.message });
   }
 };
