@@ -4,6 +4,13 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  getTeamList,
+  getNotificationsList,
+  updateUserProfile,
+  markNotificationRead,
+  changeUserPassword,
+  activateUserProfile,
+  deleteUserProfile,
 } from "../controllers/userController";
 
 const router = Router();
