@@ -1,5 +1,10 @@
 import { Router } from "express";
 import { protectRoute, isAdminRoute } from "../middleware/authMiddleware";
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+} from "../controllers/userController";
 
 const router = Router();
 
