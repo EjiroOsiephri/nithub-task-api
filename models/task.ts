@@ -1,5 +1,25 @@
-import e from "express";
 import mongoose, { Schema } from "mongoose";
+
+const activitySchema = new Schema({
+  type: {
+    type: String,
+    default: "assigned",
+    enum: [
+      "assigned",
+      "in progress",
+      "completed",
+      "started",
+      "bug",
+      "commented",
+      "reviewed",
+      "approved",
+      "rejected",
+    ],
+  },
+  activity: { type: String },
+  date: { type: Date, default: new Date() },
+  by: { type: Schema.Types.ObjectId, ref: "User" },
+});
 
 const taskSchema = new Schema(
   {
@@ -15,27 +35,7 @@ const taskSchema = new Schema(
       default: "todo",
       enum: ["todo", "in progress", "completed"],
     },
-    activities: {
-      type: {
-        type: String,
-        default: "assigned",
-        enum: [
-          "assigned",
-          "in progress",
-          "completed",
-          "started",
-          "bug",
-          "completed",
-          "commented",
-          "reviewed",
-          "approved",
-          "rejected",
-        ],
-      },
-      activity: String,
-      date: { type: Date, default: new Date() },
-      by: { type: Schema.Types.ObjectId, ref: "User" },
-    },
+    activities: [activitySchema], // Changed to an array of activities
     subTasks: [
       {
         title: String,
