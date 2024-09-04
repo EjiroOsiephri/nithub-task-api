@@ -28,6 +28,10 @@ app.use(morgan("dev"));
 
 app.use("/api", routes);
 
+app.get("/keep-alive", (req, res) => {
+  res.status(200).send("Service is alive");
+});
+
 app.use(routeNotFound);
 app.use(errorHandler);
 
