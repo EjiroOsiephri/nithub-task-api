@@ -6,6 +6,9 @@ import morgan from "morgan";
 import dbConnection from "./utils";
 import { routeNotFound, errorHandler } from "./middleware/errorMiddleware";
 import routes from "./routes/index";
+import swaggerUi from "swagger-ui-express";
+import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
@@ -28,14 +31,16 @@ app.use(morgan("dev"));
 
 app.use("/api", routes);
 
-app.get("/keep-alive", (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).send("Service is alive");
 });
+
+// Log all registered routes
 
 app.use(routeNotFound);
 app.use(errorHandler);
 
-dbConnection();
+// dbConnection();
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);

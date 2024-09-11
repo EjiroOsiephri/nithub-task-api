@@ -214,7 +214,7 @@ export const changeUserPassword = async (req: CustomRequest, res: Response) => {
 
       res.status(201).json({
         status: true,
-        message: `Password chnaged successfully.`,
+        message: `Password changed successfully.`,
       });
     } else {
       res.status(404).json({ status: false, message: "User not found" });
