@@ -40,7 +40,7 @@ app.get("/", (req, res) => {
 app.use(routeNotFound);
 app.use(errorHandler);
 
-// dbConnection();
+dbConnection();
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
