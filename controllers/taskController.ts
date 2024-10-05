@@ -35,9 +35,9 @@ export const createTask = async (req: CustomRequest, res: Response) => {
     const task = await Task.create({
       title,
       team,
-      stage: stage.toLowerCase(),
+      stage: stage?.toLowerCase(),
       date,
-      priority: priority.toLowerCase(),
+      priority: priority?.toLowerCase(),
       assets,
       activities: [activity],
     });
@@ -52,6 +52,8 @@ export const createTask = async (req: CustomRequest, res: Response) => {
       .status(200)
       .json({ status: true, task, message: "Task created successfully." });
   } catch (error) {
+    console.log(error);
+
     handleError(res, error);
   }
 };
