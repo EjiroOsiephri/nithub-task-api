@@ -3,17 +3,18 @@ import User from "../models/user";
 import { createJWT } from "../utils/index";
 import CustomRequest from "../utils/CustomRequest";
 import Notice from "../models/notification";
+import jwt from "jsonwebtoken";
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password, isAdmin, role, title } = req.body;
 
     const userExists = await User.findOne({ email });
-
     if (userExists) {
-      return res
-        .status(400)
-        .json({ status: false, message: "User already exists" });
+      return res.status(400).json({
+        status: false,
+        message: "User already exists",
+      });
     }
 
     const user = await User.create({
@@ -26,20 +27,28 @@ export const registerUser = async (req: Request, res: Response) => {
     });
 
     if (user) {
-      isAdmin ? createJWT(res, user._id) : null;
+      const token = jwt.sign(
+        { userId: user._id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET as string,
+        { expiresIn: "7d" }
+      );
 
-      user.password = "";
+      console.log("Generated Token: ", token);
 
-      return res.status(201).json({
+      res.status(201).json({
         status: true,
         message: "User created successfully",
         data: user,
+        token,
       });
     }
   } catch (error: any) {
-    console.log(error);
-
-    return res.status(400).json({ status: false, message: error.message });
+    console.error(error);
+    return res.status(500).json({
+      status: false,
+      message: "Error registering user",
+      error: error.message,
+    });
   }
 };
 

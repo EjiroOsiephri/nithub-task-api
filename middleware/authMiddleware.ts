@@ -9,10 +9,12 @@ export const protectRoute = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    let token = req.cookies.token;
+    const authHeader = req.headers.authorization;
 
-    if (token) {
-      let decodedToken = jwt.verify(
+    if (authHeader && authHeader.startsWith("Bearer")) {
+      const token = authHeader.split(" ")[1]; // Extract token from 'Bearer <token>'
+
+      const decodedToken = jwt.verify(
         token,
         process.env.JWT_SECRET as string
       ) as { userId: string };
@@ -28,12 +30,11 @@ export const protectRoute = async (
       };
 
       next();
+    } else {
+      res.status(401).json({ message: "No token provided" });
     }
   } catch (error) {
-    console.log(error);
-    res
-      .status(401)
-      .json({ message: "Not authorized, token failed, try login again" });
+    res.status(401).json({ message: "Not authorized, token failed" });
   }
 };
 
