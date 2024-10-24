@@ -8,6 +8,7 @@ import {
   getTask,
   getTasks,
   postTaskActivity,
+  recoverTask,
   trashTask,
   updateTask,
 } from "../controllers/taskController";
@@ -22,6 +23,7 @@ router.post("/activity/:id", protectRoute, postTaskActivity);
 router.get("/dashboard", protectRoute, dashboardStatistics);
 router.get("/", protectRoute, getTasks);
 router.get("/:id", protectRoute, getTask);
+router.get("/recover/:id", protectRoute, recoverTask);
 
 router.put("/create-subtask/:id", protectRoute, isAdminRoute, createSubTask);
 router.put("/update/:id", protectRoute, isAdminRoute, updateTask);
