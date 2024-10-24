@@ -28,7 +28,7 @@ router.put("/update/:id", protectRoute, isAdminRoute, updateTask);
 router.put("/:id", protectRoute, isAdminRoute, trashTask);
 
 router.delete(
-  "/delete-restore/:id?",
+  "/delete-restore/:id",
   protectRoute,
   isAdminRoute,
   deleteRestoreTask

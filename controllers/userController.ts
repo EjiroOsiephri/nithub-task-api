@@ -5,16 +5,21 @@ import CustomRequest from "../utils/CustomRequest";
 import Notice from "../models/notification";
 import jwt from "jsonwebtoken";
 
+const generateToken = (userId: any, isAdmin: boolean) => {
+  return jwt.sign({ userId, isAdmin }, process.env.JWT_SECRET as string, {
+    expiresIn: "7d",
+  });
+};
+
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password, isAdmin, role, title } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({
-        status: false,
-        message: "User already exists",
-      });
+      return res
+        .status(400)
+        .json({ status: false, message: "User already exists." });
     }
 
     const user = await User.create({
@@ -26,90 +31,77 @@ export const registerUser = async (req: Request, res: Response) => {
       title,
     });
 
-    if (user) {
-      const token = jwt.sign(
-        { userId: user._id, isAdmin: user.isAdmin },
-        process.env.JWT_SECRET as string,
-        { expiresIn: "7d" }
-      );
+    // Generate and save the token in the database
+    const token = generateToken(user._id, user.isAdmin);
+    user.token = token;
+    await user.save();
 
-      console.log("Generated Token: ", token);
-
-      res.status(201).json({
-        status: true,
-        message: "User created successfully",
-        data: user,
-        token,
-      });
-    }
+    res.status(201).json({
+      status: true,
+      message: "User registered successfully.",
+      data: user,
+      token,
+    });
   } catch (error: any) {
     console.error(error);
-    return res.status(500).json({
-      status: false,
-      message: "Error registering user",
-      error: error.message,
-    });
+    res.status(500).json({ status: false, message: "Error registering user." });
   }
 };
 
+// Login User
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
 
-    if (!user) {
+    if (!user || !(await user.matchPassword(password))) {
       return res
         .status(401)
-        .json({ status: false, message: "Invalid email or password." });
+        .json({ status: false, message: "Invalid credentials." });
     }
 
-    if (!user?.isActive) {
-      return res.status(401).json({
-        status: false,
-        message: "User account has been deactivated, contact the administrator",
-      });
-    }
-
-    const isMatch = await user.matchPassword(password);
-
-    if (user && isMatch) {
-      createJWT(res, user._id);
-
-      user.password = "";
-
-      const token = jwt.sign(
-        { userId: user._id, isAdmin: user.isAdmin },
-        process.env.JWT_SECRET as string,
-        { expiresIn: "7d" }
-      );
-
-      res.status(200).json({
-        user,
-        token,
-      });
-    } else {
+    if (!user.isActive) {
       return res
         .status(401)
-        .json({ status: false, message: "Invalid email or password" });
+        .json({ message: "Account deactivated. Contact admin." });
     }
+
+    // Check if token exists in the database
+    let token = user.token;
+
+    // If no token, generate a new one and save it
+    if (!token) {
+      token = generateToken(user._id, user.isAdmin);
+      user.token = token;
+      await user.save();
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Login successful.",
+      user,
+    });
   } catch (error: any) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+    console.error(error);
+    res.status(400).json({ status: false, message: error.message });
   }
 };
 
 export const logoutUser = async (req: Request, res: Response) => {
   try {
-    res.cookie("token", "", {
-      httpOnly: true,
-      expires: new Date(0),
-    });
+    const { email } = req.body;
 
-    res.status(200).json({ message: "Logout successful" });
+    const user = await User.findOne({ email });
+    if (user) {
+      user.token = "";
+      await user.save();
+    }
+
+    res.status(200).json({ message: "Logout successful." });
   } catch (error: any) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ status: false, message: "Logout failed." });
   }
 };
 

@@ -18,16 +18,15 @@ const dbConnection = async () => {
 
 export default dbConnection;
 
-export const createJWT = (res: Response, userId: any) => {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET ?? "ejiro", {
-    expiresIn: "1d",
+export const createJWT = (res: Response, userId: string) => {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET as string, {
+    expiresIn: "7d",
   });
 
-  // Change sameSite from strict to none when you deploy your app
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== "development",
-    sameSite: "strict", //prevent CSRF attack
-    maxAge: 1 * 24 * 60 * 60 * 1000, //1 day
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };

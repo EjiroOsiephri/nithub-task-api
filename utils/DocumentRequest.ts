@@ -9,5 +9,6 @@ export interface IUser extends Document {
   isAdmin: boolean;
   tasks: mongoose.Types.ObjectId[];
   isActive: boolean;
+  token: string;
   matchPassword(enteredPassword: string): Promise<boolean>;
 }
