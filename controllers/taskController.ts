@@ -411,3 +411,21 @@ export const deleteRestoreTask = async (req: Request, res: Response) => {
     handleError(res, error);
   }
 };
+
+export const getTrashedTasks = async (req: Request, res: Response) => {
+  try {
+    const trashedTasks = await Task.find({ isTrashed: true });
+
+    res.status(200).json({
+      status: true,
+      message: "Trashed tasks fetched successfully.",
+      data: trashedTasks,
+    });
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to fetch trashed tasks.",
+    });
+  }
+};
