@@ -414,7 +414,9 @@ export const deleteRestoreTask = async (req: Request, res: Response) => {
 
 export const getTrashedTasks = async (req: Request, res: Response) => {
   try {
+    // Log all trashed tasks for debugging
     const trashedTasks = await Task.find({ isTrashed: true });
+    console.log("Trashed Tasks:", trashedTasks); // Add this line
 
     res.status(200).json({
       status: true,
