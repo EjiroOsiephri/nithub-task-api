@@ -1,57 +1,51 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const activitySchema = new Schema({
-  type: {
-    type: String,
-    default: "assigned",
-    enum: [
-      "assigned",
-      "in progress",
-      "completed",
-      "started",
-      "bug",
-      "commented",
-      "reviewed",
-      "approved",
-      "rejected",
-    ],
-  },
-  activity: { type: String },
-  date: { type: Date, default: new Date() },
+interface SubTask {
+  title: string;
+  date: Date;
+  tag: string;
+}
+
+interface Activity {
+  type: string;
+  activity: string;
+  by: mongoose.Schema.Types.ObjectId;
+}
+
+export interface TaskDocument extends Document {
+  title: string;
+  team: mongoose.Schema.Types.ObjectId[];
+  stage: string;
+  date: Date;
+  priority: string;
+  assets: string[];
+  subTasks: SubTask[];
+  activities: Activity[];
+  isTrashed: boolean;
+}
+
+const SubTaskSchema = new Schema<SubTask>({
+  title: { type: String, required: true },
+  date: { type: Date, required: false },
+  tag: { type: String, required: false },
+});
+
+const ActivitySchema = new Schema<Activity>({
+  type: { type: String, required: true },
+  activity: { type: String, required: true },
   by: { type: Schema.Types.ObjectId, ref: "User" },
 });
 
-const taskSchema = new Schema(
-  {
-    title: { type: String, required: true },
-    date: { type: Date, default: new Date() },
-    priority: {
-      type: String,
-      default: "normal",
-      enum: ["low", "normal", "high", "medium"],
-    },
-    stage: {
-      type: String,
-      default: "todo",
-      enum: ["todo", "in progress", "completed"],
-    },
-    activities: [activitySchema], // Changed to an array of activities
-    subTasks: [
-      {
-        title: String,
-        date: Date,
-        tag: String,
-      },
-    ],
-    assets: [String],
-    team: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    isTrashed: { type: Boolean, default: false },
-  },
-  {
-    timestamps: true,
-  }
-);
+const TaskSchema = new Schema<TaskDocument>({
+  title: { type: String, required: true },
+  team: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  stage: { type: String, required: true },
+  date: { type: Date, required: true },
+  priority: { type: String, required: true },
+  assets: [{ type: String }],
+  subTasks: [SubTaskSchema],
+  activities: [ActivitySchema],
+  isTrashed: { type: Boolean, default: false },
+});
 
-const Task = mongoose.model("Task", taskSchema);
-
-export default Task;
+export default mongoose.model<TaskDocument>("Task", TaskSchema);
