@@ -5,6 +5,11 @@ import CustomRequest from "../utils/CustomRequest";
 import Notice from "../models/notification";
 import jwt from "jsonwebtoken";
 
+const handleError = (res: Response, error: any) => {
+  console.error(error);
+  return res.status(400).json({ status: false, message: error.message });
+};
+
 const generateToken = (userId: any, isAdmin: boolean) => {
   return jwt.sign({ userId, isAdmin }, process.env.JWT_SECRET as string, {
     expiresIn: "7d",
@@ -143,39 +148,28 @@ export const getNotificationsList = async (
 
 export const updateUserProfile = async (req: CustomRequest, res: Response) => {
   try {
-    const userId = req?.user?.userId;
-    const isAdmin = req?.user?.isAdmin;
-    const { _id } = req.body;
+    const userId = req.user?.userId;
+    const { name, title, role } = req.body;
 
-    const id =
-      isAdmin && userId === _id
-        ? userId
-        : isAdmin && userId !== _id
-        ? _id
-        : userId;
-
-    const user = await User.findById(id);
-
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.title = req.body.title || user.title;
-      user.role = req.body.role || user.role;
-
-      const updatedUser = await user.save();
-
-      user.password = "";
-
-      res.status(201).json({
-        status: true,
-        message: "Profile Updated Successfully.",
-        user: updatedUser,
-      });
-    } else {
-      res.status(404).json({ status: false, message: "User not found" });
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: false, message: "User not found." });
     }
-  } catch (error: any) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+
+    user.name = name || user.name;
+    user.title = title || user.title;
+    user.role = role || user.role;
+
+    const updatedUser = await user.save();
+    res.status(200).json({
+      status: true,
+      message: "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    handleError(res, error);
   }
 };
 

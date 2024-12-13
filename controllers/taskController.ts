@@ -107,7 +107,6 @@ export const duplicateTask = async (req: Request, res: Response) => {
   }
 };
 
-// Post an activity to a task
 export const postTaskActivity = async (req: CustomRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -124,7 +123,7 @@ export const postTaskActivity = async (req: CustomRequest, res: Response) => {
     const data = {
       type,
       activity,
-      by: userId,
+      by: userId as any,
     };
 
     if (!task.activities) {
@@ -144,7 +143,6 @@ export const postTaskActivity = async (req: CustomRequest, res: Response) => {
   }
 };
 
-// Get dashboard statistics
 export const dashboardStatistics = async (
   req: CustomRequest,
   res: Response
@@ -204,26 +202,6 @@ export const dashboardStatistics = async (
   }
 };
 
-export const getTasks = async (req: Request, res: Response) => {
-  try {
-    const { stage, isTrashed } = req.query;
-
-    const query: any = { isTrashed: isTrashed === "true" };
-
-    if (stage) {
-      query.stage = stage;
-    }
-
-    const tasks = await Task.find(query)
-      .populate("team", "name title email")
-      .sort({ _id: -1 });
-
-    res.status(200).json({ status: true, tasks });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
 export const getTask = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -244,33 +222,6 @@ export const getTask = async (req: Request, res: Response) => {
   }
 };
 
-// Create a new sub-task for an existing task
-export const createSubTask = async (req: Request, res: Response) => {
-  try {
-    const { title, tag, date } = req.body;
-    const { id } = req.params;
-
-    const task = await Task.findById(id);
-    if (!task) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Task not found." });
-    }
-
-    const newSubTask = { title, date, tag };
-    task.subTasks.push(newSubTask);
-
-    await task.save();
-
-    res
-      .status(200)
-      .json({ status: true, message: "SubTask added successfully." });
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
-// Update an existing task
 export const updateTask = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -300,8 +251,6 @@ export const updateTask = async (req: Request, res: Response) => {
   }
 };
 
-// Trash a task
-// Trash a task (Soft delete)
 export const trashTask = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -350,73 +299,10 @@ export const recoverTask = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteRestoreTask = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { actionType } = req.query;
-
-    switch (actionType) {
-      case "delete": {
-        const task = await Task.findByIdAndDelete(id);
-        if (!task) {
-          return res
-            .status(404)
-            .json({ status: false, message: "Task not found." });
-        }
-        return res
-          .status(200)
-          .json({ status: true, message: "Task permanently deleted." });
-      }
-      case "deleteAll": {
-        const result = await Task.deleteMany({ isTrashed: true });
-        return res.status(200).json({
-          status: true,
-          message: `${result.deletedCount} trashed tasks permanently deleted.`,
-        });
-      }
-      case "restore": {
-        const task = await Task.findById(id);
-        if (!task) {
-          return res
-            .status(404)
-            .json({ status: false, message: "Task not found." });
-        }
-        if (!task.isTrashed) {
-          return res
-            .status(400)
-            .json({ status: false, message: "Task is not in trash." });
-        }
-        task.isTrashed = false;
-        await task.save();
-        return res
-          .status(200)
-          .json({ status: true, message: "Task restored successfully." });
-      }
-      case "restoreAll": {
-        const result = await Task.updateMany(
-          { isTrashed: true },
-          { isTrashed: false }
-        );
-        return res.status(200).json({
-          status: true,
-          message: `${result.modifiedCount} tasks restored from trash.`,
-        });
-      }
-      default:
-        return res
-          .status(400)
-          .json({ status: false, message: "Invalid action type." });
-    }
-  } catch (error) {
-    handleError(res, error);
-  }
-};
-
 export const getTrashedTasks = async (req: Request, res: Response) => {
   try {
-    // Log all trashed tasks for debugging
     const trashedTasks = await Task.find({ isTrashed: true });
-    console.log("Trashed Tasks:", trashedTasks); // Add this line
+    console.log("Trashed Tasks:", trashedTasks);
 
     res.status(200).json({
       status: true,
@@ -429,5 +315,80 @@ export const getTrashedTasks = async (req: Request, res: Response) => {
       status: false,
       message: "Failed to fetch trashed tasks.",
     });
+  }
+};
+
+export const deleteRestoreTask = async (req: Request, res: Response) => {
+  try {
+    const { actionType } = req.query;
+
+    switch (actionType) {
+      case "restoreAll":
+        const restored = await Task.updateMany(
+          { isTrashed: true },
+          { isTrashed: false }
+        );
+        return res.status(200).json({
+          status: true,
+          message: `${restored.modifiedCount} tasks restored successfully.`,
+        });
+
+      case "deleteAll":
+        const deleted = await Task.deleteMany({ isTrashed: true });
+        return res.status(200).json({
+          status: true,
+          message: `${deleted.deletedCount} trashed tasks permanently deleted.`,
+        });
+
+      default:
+        return res
+          .status(400)
+          .json({ status: false, message: "Invalid action type." });
+    }
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+export const createSubTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { title, tag, date } = req.body;
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Task not found." });
+    }
+
+    task.subTasks.push({ title, date, tag });
+    await task.save();
+
+    res.status(200).json({
+      status: true,
+      message: "Subtask added successfully.",
+      subTasks: task.subTasks,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+export const getTasks = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { stage, isTrashed } = req.query;
+
+    const query: any = { isTrashed: isTrashed === "true", team: userId };
+    if (stage) query.stage = stage;
+
+    const tasks = await Task.find(query)
+      .populate("team", "name email")
+      .sort({ _id: -1 });
+
+    res.status(200).json({ status: true, tasks });
+  } catch (error) {
+    handleError(res, error);
   }
 };
